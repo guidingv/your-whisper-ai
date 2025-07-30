@@ -18,7 +18,7 @@ export const useBackgroundSounds = () => {
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const rainNoiseRef = useRef<AudioBufferSourceNode | null>(null);
-  const brushingAudioRef = useRef<HTMLAudioElement | null>(null);
+  const brushingNoiseRef = useRef<AudioBufferSourceNode | null>(null);
   const rainGainRef = useRef<GainNode | null>(null);
   const brushingGainRef = useRef<GainNode | null>(null);
 
@@ -97,6 +97,12 @@ export const useBackgroundSounds = () => {
       const audioContext = await initAudioContext();
       console.log(`Audio context state: ${audioContext.state}`);
       
+      // Ensure audio context is running
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+        console.log(`Audio context resumed, new state: ${audioContext.state}`);
+      }
+      
       if (soundId === 'rain') {
         if (rainNoiseRef.current) {
           // Stop rain
@@ -125,16 +131,16 @@ export const useBackgroundSounds = () => {
           rainGainRef.current = gainNode;
         }
       } else if (soundId === 'brushing') {
-        if (brushingAudioRef.current?.paused === false) {
+        if (brushingNoiseRef.current) {
           // Stop brushing
-          brushingAudioRef.current.pause();
-          brushingAudioRef.current.currentTime = 0;
-        } else {
-          // Start brushing using generated buffer
+          brushingNoiseRef.current.stop();
+          brushingNoiseRef.current = null;
           if (brushingGainRef.current) {
             brushingGainRef.current.disconnect();
+            brushingGainRef.current = null;
           }
-          
+        } else {
+          // Start brushing using generated buffer
           const brushingBuffer = await fetchBrushingSound();
           const source = audioContext.createBufferSource();
           const gainNode = audioContext.createGain();
@@ -148,14 +154,8 @@ export const useBackgroundSounds = () => {
           gainNode.gain.value = brushingSound?.volume || 0.3;
           
           source.start();
+          brushingNoiseRef.current = source;
           brushingGainRef.current = gainNode;
-          
-          // Store reference for stopping
-          source.onended = () => {
-            setSounds(prev => prev.map(s => 
-              s.id === 'brushing' ? { ...s, isPlaying: false } : s
-            ));
-          };
         }
       }
       
@@ -197,6 +197,10 @@ export const useBackgroundSounds = () => {
     }
     
     // Stop brushing
+    if (brushingNoiseRef.current) {
+      brushingNoiseRef.current.stop();
+      brushingNoiseRef.current = null;
+    }
     if (brushingGainRef.current) {
       brushingGainRef.current.disconnect();
       brushingGainRef.current = null;
