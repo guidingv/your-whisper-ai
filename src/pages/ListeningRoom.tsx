@@ -6,16 +6,18 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useTTS } from "@/hooks/useTTS";
+import { useBackgroundSounds } from "@/hooks/useBackgroundSounds";
 import { generateASMRScript, generateQuickVariation } from "@/utils/asmrScripts";
 import { 
   Play, Pause, SkipForward, Heart, Download, 
-  Timer, Volume2, RefreshCw, Settings, Loader2, ArrowLeft 
+  Timer, Volume2, RefreshCw, Settings, Loader2, ArrowLeft, CloudRain, Paintbrush 
 } from "lucide-react";
 
 const ListeningRoom = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isLoading: ttsLoading, isGenerating, progress: ttsProgress, audioUrl, error: ttsError, generateSpeech, cleanup, audioRef } = useTTS();
+  const { sounds, isLoading: soundsLoading, error: soundsError, toggleSound, setVolume: setSoundVolume } = useBackgroundSounds();
   
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState([0]);
@@ -386,6 +388,57 @@ const ListeningRoom = () => {
                     ))}
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Background Sounds */}
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="text-lg">Background Sounds</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {sounds.map((sound) => (
+                  <div key={sound.id} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {sound.id === 'rain' ? (
+                          <CloudRain className="w-4 h-4" />
+                        ) : (
+                          <Paintbrush className="w-4 h-4" />
+                        )}
+                        <span className="text-sm font-medium">{sound.name}</span>
+                      </div>
+                      <Button
+                        variant={sound.isPlaying ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleSound(sound.id)}
+                        disabled={soundsLoading}
+                      >
+                        {sound.isPlaying ? "Stop" : "Play"}
+                      </Button>
+                    </div>
+                    {sound.isPlaying && (
+                      <div className="flex items-center gap-2">
+                        <Volume2 className="w-3 h-3" />
+                        <Slider
+                          value={[sound.volume * 100]}
+                          onValueChange={(value) => setSoundVolume(sound.id, value[0] / 100)}
+                          max={100}
+                          step={1}
+                          className="flex-1"
+                        />
+                        <span className="text-xs text-muted-foreground w-8">
+                          {Math.round(sound.volume * 100)}%
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {soundsError && (
+                  <div className="text-sm text-destructive">
+                    {soundsError}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
