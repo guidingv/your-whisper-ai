@@ -9,7 +9,7 @@ import { useTTS } from "@/hooks/useTTS";
 import { generateASMRScript, generateQuickVariation } from "@/utils/asmrScripts";
 import { 
   Play, Pause, SkipForward, Heart, Download, 
-  Timer, Volume2, RefreshCw, Settings, Loader2 
+  Timer, Volume2, RefreshCw, Settings, Loader2, ArrowLeft 
 } from "lucide-react";
 
 const ListeningRoom = () => {
@@ -184,6 +184,18 @@ const ListeningRoom = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-whisper-start to-whisper-end p-6">
       <div className="max-w-4xl mx-auto">
+        {/* Back Button */}
+        <div className="mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/onboarding')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Create New Content
+          </Button>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">
