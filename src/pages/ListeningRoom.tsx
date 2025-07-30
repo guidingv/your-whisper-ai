@@ -1,30 +1,102 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { useTTS } from "@/hooks/useTTS";
+import { generateASMRScript, generateQuickVariation } from "@/utils/asmrScripts";
 import { 
   Play, Pause, SkipForward, Heart, Download, 
-  Timer, Volume2, RefreshCw, Settings 
+  Timer, Volume2, RefreshCw, Settings, Loader2 
 } from "lucide-react";
 
 const ListeningRoom = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { isLoading: ttsLoading, isGenerating, progress: ttsProgress, audioUrl, error: ttsError, generateSpeech, cleanup, audioRef } = useTTS();
+  
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState([0]);
   const [volume, setVolume] = useState([75]);
   const [isLiked, setIsLiked] = useState(false);
   const [preferences, setPreferences] = useState<any>(null);
+  const [currentScript, setCurrentScript] = useState<string>("");
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const progressUpdateRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     const stored = localStorage.getItem('asmr-preferences');
     if (stored) {
-      setPreferences(JSON.parse(stored));
+      const prefs = JSON.parse(stored);
+      setPreferences(prefs);
+      
+      // Generate initial script and audio
+      const script = generateASMRScript(prefs);
+      setCurrentScript(script);
+      generateInitialAudio(script);
     } else {
       navigate('/onboarding');
     }
   }, [navigate]);
+
+  // Setup audio element event listeners
+  useEffect(() => {
+    if (audioRef.current && audioUrl) {
+      const audio = audioRef.current;
+      audio.src = audioUrl;
+      audio.volume = volume[0] / 100;
+      
+      const handleLoadedMetadata = () => {
+        setDuration(audio.duration);
+      };
+      
+      const handleTimeUpdate = () => {
+        setCurrentTime(audio.currentTime);
+        const progressPercent = (audio.currentTime / audio.duration) * 100;
+        setProgress([progressPercent]);
+      };
+      
+      const handleEnded = () => {
+        setIsPlaying(false);
+      };
+      
+      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.addEventListener('timeupdate', handleTimeUpdate);
+      audio.addEventListener('ended', handleEnded);
+      
+      return () => {
+        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        audio.removeEventListener('timeupdate', handleTimeUpdate);
+        audio.removeEventListener('ended', handleEnded);
+      };
+    }
+  }, [audioUrl, volume]);
+
+  // Update volume when slider changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume[0] / 100;
+    }
+  }, [volume]);
+
+  const generateInitialAudio = async (script: string) => {
+    try {
+      await generateSpeech(script);
+      toast({
+        title: "ASMR Ready",
+        description: "Your personalized whisper session is ready to play.",
+      });
+    } catch (error) {
+      toast({
+        title: "Generation Failed", 
+        description: "Failed to generate audio. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const suggestions = [
     "Faster brushing",
@@ -34,10 +106,77 @@ const ListeningRoom = () => {
     "Different triggers"
   ];
 
-  const handleGenerateNew = () => {
-    // Simulate generating new content
+  const handleGenerateNew = async () => {
+    if (!preferences) return;
+    
+    const newScript = generateASMRScript(preferences);
+    setCurrentScript(newScript);
     setProgress([0]);
-    setIsPlaying(true);
+    setCurrentTime(0);
+    setIsPlaying(false);
+    
+    try {
+      await generateSpeech(newScript);
+      toast({
+        title: "New Whisper Generated",
+        description: "Your fresh ASMR experience is ready.",
+      });
+    } catch (error) {
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate new audio. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSuggestionClick = async (suggestion: string) => {
+    if (!currentScript) return;
+    
+    const variationScript = generateQuickVariation(currentScript, suggestion);
+    setCurrentScript(variationScript);
+    setProgress([0]);
+    setCurrentTime(0);
+    setIsPlaying(false);
+    
+    try {
+      await generateSpeech(variationScript);
+      toast({
+        title: "Variation Generated",
+        description: `Applied: ${suggestion}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate variation. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const togglePlayPause = () => {
+    if (!audioRef.current || !audioUrl) return;
+    
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleProgressChange = (newProgress: number[]) => {
+    if (!audioRef.current || !duration) return;
+    
+    const newTime = (newProgress[0] / 100) * duration;
+    audioRef.current.currentTime = newTime;
+    setProgress(newProgress);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   if (!preferences) return null;
@@ -81,45 +220,69 @@ const ListeningRoom = () => {
                 {/* Track Info */}
                 <div className="text-center">
                   <h3 className="text-2xl font-semibold mb-2">
-                    Gentle {preferences.triggers?.[0]} for {preferences.mood}
+                    {ttsLoading || isGenerating ? 'Generating Your Whisper...' : 
+                     `Gentle ${preferences.triggers?.[0]} for ${preferences.mood}`}
                   </h3>
                   <div className="flex flex-wrap gap-2 justify-center">
                     {preferences.triggers?.slice(0, 3).map((trigger: string) => (
                       <Badge key={trigger} variant="secondary">{trigger}</Badge>
                     ))}
                   </div>
+                  {(ttsLoading || isGenerating) && (
+                    <div className="mt-2 flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm text-muted-foreground">
+                        {ttsLoading ? `Loading TTS Model... ${ttsProgress}%` : 'Generating speech...'}
+                      </span>
+                    </div>
+                  )}
+                  {ttsError && (
+                    <div className="mt-2 text-sm text-destructive">
+                      {ttsError}
+                    </div>
+                  )}
                 </div>
 
                 {/* Waveform Visualization */}
                 <div className="h-32 bg-background/20 rounded-lg flex items-center justify-center">
-                  <div className="flex items-center gap-1 h-16">
-                    {Array.from({ length: 50 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`w-1 bg-primary/60 rounded transition-all duration-300 ${
-                          isPlaying ? 'animate-pulse' : ''
-                        }`}
-                        style={{ 
-                          height: `${Math.random() * 100}%`,
-                          animationDelay: `${i * 50}ms`
-                        }}
-                      />
-                    ))}
-                  </div>
+                  {(ttsLoading || isGenerating) ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                      <span className="text-muted-foreground">
+                        {ttsLoading ? 'Loading...' : 'Generating...'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 h-16">
+                      {Array.from({ length: 50 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={`w-1 bg-primary/60 rounded transition-all duration-300 ${
+                            isPlaying && audioUrl ? 'animate-pulse' : ''
+                          }`}
+                          style={{ 
+                            height: `${Math.random() * 100}%`,
+                            animationDelay: `${i * 50}ms`
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Progress Bar */}
                 <div className="space-y-2">
                   <Slider
                     value={progress}
-                    onValueChange={setProgress}
+                    onValueChange={handleProgressChange}
                     max={100}
-                    step={1}
+                    step={0.1}
                     className="w-full"
+                    disabled={!audioUrl || ttsLoading || isGenerating}
                   />
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>2:34</span>
-                    <span>15:30</span>
+                    <span>{formatTime(currentTime)}</span>
+                    <span>{formatTime(duration)}</span>
                   </div>
                 </div>
 
@@ -132,8 +295,9 @@ const ListeningRoom = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setIsPlaying(!isPlaying)}
+                    onClick={togglePlayPause}
                     className="w-12 h-12"
+                    disabled={!audioUrl || ttsLoading || isGenerating}
                   >
                     {isPlaying ? (
                       <Pause className="w-6 h-6" />
@@ -177,9 +341,19 @@ const ListeningRoom = () => {
                   onClick={handleGenerateNew}
                   className="w-full mb-4"
                   size="lg"
+                  disabled={ttsLoading || isGenerating}
                 >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Whisper Another One
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Whisper Another One
+                    </>
+                  )}
                 </Button>
                 
                 <div className="space-y-2">
@@ -191,6 +365,8 @@ const ListeningRoom = () => {
                         variant="outline"
                         size="sm"
                         className="w-full justify-start text-left"
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        disabled={ttsLoading || isGenerating}
                       >
                         {suggestion}
                       </Button>
@@ -239,6 +415,9 @@ const ListeningRoom = () => {
             </Card>
           </div>
         </div>
+        
+        {/* Hidden audio element */}
+        <audio ref={audioRef} preload="auto" />
       </div>
     </div>
   );
