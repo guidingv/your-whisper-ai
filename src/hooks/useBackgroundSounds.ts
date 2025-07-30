@@ -93,7 +93,9 @@ export const useBackgroundSounds = () => {
     setError(null);
     
     try {
+      console.log(`Toggling sound: ${soundId}`);
       const audioContext = await initAudioContext();
+      console.log(`Audio context state: ${audioContext.state}`);
       
       if (soundId === 'rain') {
         if (rainNoiseRef.current) {

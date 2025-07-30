@@ -12,8 +12,8 @@ export const generateASMRScript = (preferences: ASMRPreferences): string => {
   
   // Create personalized greeting
   const greeting = name 
-    ? `Hello ${name}, welcome to your personal ASMR session.` 
-    : "Welcome to your personal ASMR session.";
+    ? `Hello ${name}, welcome to your personal A.S.M.R session.` 
+    : "Welcome to your personal A.S.M.R session.";
   
   // Mood-based introductions
   const moodIntros = {
