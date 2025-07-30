@@ -20,10 +20,10 @@ export const useTTS = () => {
     setIsLoading(true);
     setError(null);
     try {
-      console.log('Initializing Kokoro TTS...');
+      console.log('Initializing SpeechT5 TTS...');
       ttsRef.current = await pipeline(
         'text-to-speech',
-        'geneing/Kokoro',
+        'Xenova/speecht5_tts',
         { 
           device: 'webgpu',
           progress_callback: (progress: any) => {
@@ -33,7 +33,7 @@ export const useTTS = () => {
           }
         }
       );
-      console.log('Kokoro TTS initialized successfully');
+      console.log('SpeechT5 TTS initialized successfully');
       return ttsRef.current;
     } catch (err) {
       console.error('Failed to initialize TTS:', err);
@@ -52,9 +52,9 @@ export const useTTS = () => {
       const tts = await initializeTTS();
       console.log('Generating speech for:', text.substring(0, 50) + '...');
       
+      // For SpeechT5, we need speaker embeddings
       const result = await tts(text, {
-        voice: voice || 'female_whisper',
-        speaker_id: 0
+        speaker_embeddings: 'https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/speaker_embeddings.bin'
       });
       
       // Convert the result to audio blob
