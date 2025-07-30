@@ -36,7 +36,7 @@ export const useTTS = () => {
     }
   }, []);
 
-  const generateSpeech = useCallback(async (text: string, voice?: string) => {
+  const generateSpeech = useCallback(async (text: string, voiceStyle?: string, triggers?: string[]) => {
     setIsGenerating(true);
     setError(null);
     
@@ -44,9 +44,25 @@ export const useTTS = () => {
       const tts = await initializeTTS();
       console.log('Generating speech for:', text.substring(0, 50) + '...');
       
+      // Map ASMR voice styles to Kokoro voices
+      const voiceMapping = {
+        'female-whisper': 'af_bella',
+        'male-soft': 'am_adam', 
+        'nonbinary-gentle': 'af_sarah'
+      };
+      
+      const selectedVoice = voiceMapping[voiceStyle as keyof typeof voiceMapping] || 'af_bella';
+      
+      // Modify text for ASMR effects based on triggers
+      let processedText = text;
+      if (triggers?.includes('Whispering') || voiceStyle === 'female-whisper') {
+        // Add whisper markers and slow down speech
+        processedText = processedText.replace(/\./g, '... ').replace(/,/g, ', ');
+      }
+      
       // Generate audio using Kokoro TTS
-      const audio = await tts.generate(text, {
-        voice: voice || 'af_bella' // Default to a nice female voice
+      const audio = await tts.generate(processedText, {
+        voice: selectedVoice
       });
       
       // Convert the audio data to a blob

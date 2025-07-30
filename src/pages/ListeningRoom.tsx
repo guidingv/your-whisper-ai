@@ -84,7 +84,7 @@ const ListeningRoom = () => {
 
   const generateInitialAudio = async (script: string) => {
     try {
-      await generateSpeech(script);
+      await generateSpeech(script, preferences?.voice, preferences?.triggers);
       toast({
         title: "ASMR Ready",
         description: "Your personalized whisper session is ready to play.",
@@ -116,7 +116,7 @@ const ListeningRoom = () => {
     setIsPlaying(false);
     
     try {
-      await generateSpeech(newScript);
+      await generateSpeech(newScript, preferences.voice, preferences.triggers);
       toast({
         title: "New Whisper Generated",
         description: "Your fresh ASMR experience is ready.",
@@ -140,7 +140,7 @@ const ListeningRoom = () => {
     setIsPlaying(false);
     
     try {
-      await generateSpeech(variationScript);
+      await generateSpeech(variationScript, preferences?.voice, preferences?.triggers);
       toast({
         title: "Variation Generated",
         description: `Applied: ${suggestion}`,
