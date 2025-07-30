@@ -13,62 +13,62 @@ const Pricing = () => {
 
   const plans = [
     {
-      name: "Free",
-      price: 0,
-      yearlyPrice: 0,
-      description: "Perfect for trying ASMR",
+      name: "Starter",
+      price: 9,
+      yearlyPrice: 7.50,
+      description: "Perfect for personal relaxation",
       features: [
-        "3 custom whispers per month",
-        "Daily community stream",
+        "10 custom whispers per month",
+        "Name personalization in whispers",
         "Basic voice selection",
-        "Standard audio quality",
-        "Mobile app access"
+        "Standard ambient sounds",
+        "High-quality audio",
+        "Mobile app access",
+        "Sleep timer"
       ],
-      limitations: [
-        "No name personalization",
-        "Limited background sounds",
-        "No download option"
-      ],
-      cta: "Start Free",
+      cta: "Get Started",
       popular: false,
       icon: Play
     },
     {
       name: "Premium",
-      price: 9.99,
-      yearlyPrice: 8.33,
+      price: 29,
+      yearlyPrice: 24.17,
       description: "Unlimited personal comfort",
       features: [
         "Unlimited custom whispers",
-        "Name personalization in whispers",
+        "Advanced name personalization",
         "Premium voice selection",
-        "Advanced ambient engine",
-        "High-quality audio (320kbps)",
+        "Full ambient engine library",
+        "Ultra high-quality audio (320kbps)",
         "Download for offline listening",
-        "Sleep timer & playlists",
+        "Advanced sleep timer & playlists",
         "Priority generation speed",
-        "Exclusive voice styles"
+        "Custom voice variations",
+        "Mood-based recommendations"
       ],
       cta: "Go Premium",
       popular: true,
       icon: Sparkles
     },
     {
-      name: "Whisper Pass",
-      price: 199,
-      yearlyPrice: 199,
-      isLifetime: true,
-      description: "Lifetime of personalized whispers",
+      name: "Professional",
+      price: 99,
+      yearlyPrice: 82.50,
+      description: "Full access plus advanced features",
       features: [
-        "All Premium features forever",
-        "1 free custom voice pack monthly",
+        "Everything in Premium",
+        "Unlimited voice style variations", 
+        "Custom trigger combinations",
+        "Advanced personalization AI",
+        "Exclusive voice models",
         "Early access to new features",
-        "Exclusive community Discord",
-        "Direct feedback to development team",
+        "Priority customer support",
         "Commercial usage rights",
-        "API access for developers"
+        "API access for integrations",
+        "Advanced analytics dashboard"
       ],
-      cta: "Get Lifetime Access",
+      cta: "Go Professional",
       popular: false,
       icon: Crown
     }
@@ -130,11 +130,7 @@ const Pricing = () => {
         <div className="grid md:grid-cols-3 gap-8 mb-16">
           {plans.map((plan) => {
             const Icon = plan.icon;
-            const currentPrice = plan.isLifetime 
-              ? plan.price 
-              : isAnnual 
-                ? plan.yearlyPrice 
-                : plan.price;
+            const currentPrice = isAnnual ? plan.yearlyPrice : plan.price;
 
             return (
               <Card
@@ -163,18 +159,11 @@ const Pricing = () => {
                       <span className="text-4xl font-bold">
                         ${currentPrice}
                       </span>
-                      {!plan.isLifetime && (
-                        <span className="text-muted-foreground">
-                          /{isAnnual ? 'mo' : 'mo'}
-                        </span>
-                      )}
+                      <span className="text-muted-foreground">
+                        /{isAnnual ? 'mo' : 'mo'}
+                      </span>
                     </div>
-                    {plan.isLifetime && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        One-time payment
-                      </p>
-                    )}
-                    {isAnnual && !plan.isLifetime && plan.price > 0 && (
+                    {isAnnual && (
                       <p className="text-sm text-muted-foreground mt-1">
                         Billed annually at ${(currentPrice * 12).toFixed(0)}
                       </p>
@@ -199,13 +188,6 @@ const Pricing = () => {
                         <span className="text-sm">{feature}</span>
                       </div>
                     ))}
-                    
-                    {plan.limitations?.map((limitation, index) => (
-                      <div key={index} className="flex items-center gap-3 opacity-60">
-                        <div className="w-4 h-4 rounded-full border border-muted-foreground/30 flex-shrink-0" />
-                        <span className="text-sm line-through">{limitation}</span>
-                      </div>
-                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -216,24 +198,24 @@ const Pricing = () => {
         {/* Feature Comparison */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-center mb-8">
-            Hear the Difference
+            Experience the Quality
           </h2>
           
           <Card className="glass-card">
             <CardContent className="p-8">
-              <div className="grid md:grid-cols-2 gap-8">
+              <div className="grid md:grid-cols-3 gap-8">
                 <div className="space-y-4">
                   <h3 className="text-xl font-semibold flex items-center gap-2">
-                    <Volume2 className="w-5 h-5" />
-                    Free Experience
+                    <Play className="w-5 h-5" />
+                    Starter Experience
                   </h3>
                   <div className="p-4 bg-background/20 rounded-lg">
                     <p className="text-sm text-muted-foreground mb-2">Sample whisper:</p>
-                    <p className="italic">"Hello there, let me help you relax with some gentle sounds..."</p>
+                    <p className="italic">"Hello Sarah, let me help you relax with some gentle brushing sounds..."</p>
                   </div>
                   <Button variant="outline" className="w-full">
                     <Play className="w-4 h-4 mr-2" />
-                    Play Free Sample
+                    Play Starter Sample
                   </Button>
                 </div>
 
@@ -244,11 +226,26 @@ const Pricing = () => {
                   </h3>
                   <div className="p-4 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-lg border border-primary/20">
                     <p className="text-sm text-muted-foreground mb-2">Personalized whisper:</p>
-                    <p className="italic">"Hello Sarah, I know you've had a long day. Let me whisper away your stress with your favorite brushing sounds..."</p>
+                    <p className="italic">"Hello Sarah, I know you've had a long day at work. Let me whisper away your stress with your favorite soft brushing sounds and gentle rain..."</p>
                   </div>
                   <Button className="w-full">
                     <Play className="w-4 h-4 mr-2" />
                     Play Premium Sample
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold flex items-center gap-2">
+                    <Crown className="w-5 h-5" />
+                    Professional Experience
+                  </h3>
+                  <div className="p-4 bg-gradient-to-r from-primary/30 to-accent/30 rounded-lg border border-primary/30">
+                    <p className="text-sm text-muted-foreground mb-2">Ultra-personalized whisper:</p>
+                    <p className="italic">"Sarah, my dear, I've noticed you prefer evening sessions after stressful days. Tonight I've crafted something special - your favorite layered brushing with that subtle rain you love, just for you..."</p>
+                  </div>
+                  <Button variant="secondary" className="w-full">
+                    <Play className="w-4 h-4 mr-2" />
+                    Play Professional Sample
                   </Button>
                 </div>
               </div>
@@ -287,10 +284,10 @@ const Pricing = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="px-8">
-                Start Free Trial
+                Start with Starter Plan
               </Button>
               <Button variant="outline" size="lg" className="px-8">
-                View All Features
+                Compare All Plans
               </Button>
             </div>
           </CardContent>
