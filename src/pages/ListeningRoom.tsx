@@ -187,11 +187,12 @@ const ListeningRoom = () => {
         {/* Back Button */}
         <div className="mb-6">
           <Button
-            variant="ghost"
+            variant="outline"
+            size="lg"
             onClick={() => navigate('/onboarding')}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-background/20 backdrop-blur-sm border-white/20 text-foreground hover:bg-background/30"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-5 h-5" />
             Create New Content
           </Button>
         </div>
