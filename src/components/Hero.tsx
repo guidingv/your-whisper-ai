@@ -51,7 +51,7 @@ const Hero = () => {
             <Button 
               variant="hero" 
               size="xl" 
-              onClick={handleGenerateWhisper}
+              onClick={() => window.location.href = '/onboarding'}
               className="animate-pulse-glow"
             >
               <Sparkles className="w-5 h-5" />

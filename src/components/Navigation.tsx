@@ -18,13 +18,13 @@ const Navigation = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+            <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
               How It Works
             </a>
-            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+            <a href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
               Pricing
             </a>
-            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+            <a href="/library" className="text-muted-foreground hover:text-foreground transition-colors">
               Your Library
             </a>
           </div>
@@ -35,7 +35,11 @@ const Navigation = () => {
               <User className="w-4 h-4" />
               Sign In
             </Button>
-            <Button variant="default" size="sm">
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={() => window.location.href = '/onboarding'}
+            >
               Start Free
             </Button>
             
