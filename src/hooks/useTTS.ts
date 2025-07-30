@@ -1,9 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { pipeline, env } from '@huggingface/transformers';
-
-// Configure transformers.js
-env.allowLocalModels = false;
-env.useBrowserCache = true;
+import { KokoroTTS } from 'kokoro-js';
 
 export const useTTS = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -20,20 +16,16 @@ export const useTTS = () => {
     setIsLoading(true);
     setError(null);
     try {
-      console.log('Initializing SpeechT5 TTS...');
-      ttsRef.current = await pipeline(
-        'text-to-speech',
-        'Xenova/speecht5_tts',
-        { 
-          device: 'webgpu',
-          progress_callback: (progress: any) => {
-            if (progress.status === 'downloading') {
-              setProgress(Math.round(progress.progress || 0));
-            }
+      console.log('Initializing Kokoro TTS...');
+      ttsRef.current = await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', {
+        dtype: 'q8', // Quantized for faster loading
+        progress_callback: (progress: any) => {
+          if (progress.status === 'downloading') {
+            setProgress(Math.round(progress.progress || 0));
           }
         }
-      );
-      console.log('SpeechT5 TTS initialized successfully');
+      });
+      console.log('Kokoro TTS initialized successfully');
       return ttsRef.current;
     } catch (err) {
       console.error('Failed to initialize TTS:', err);
@@ -52,22 +44,22 @@ export const useTTS = () => {
       const tts = await initializeTTS();
       console.log('Generating speech for:', text.substring(0, 50) + '...');
       
-      // For SpeechT5, we need speaker embeddings
-      const result = await tts(text, {
-        speaker_embeddings: 'https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/speaker_embeddings.bin'
+      // Generate audio using Kokoro TTS
+      const audio = await tts.generate(text, {
+        voice: voice || 'af_bella' // Default to a nice female voice
       });
       
-      // Convert the result to audio blob
-      const audioData = result.audio;
-      const sampleRate = result.sampling_rate || 24000;
+      // Convert the audio data to a blob
+      const audioBuffer = audio.audio; // This should be Float32Array
+      const sampleRate = audio.sample_rate || 24000;
       
-      // Create audio buffer
+      // Create audio context and buffer
       const audioContext = new AudioContext();
-      const audioBuffer = audioContext.createBuffer(1, audioData.length, sampleRate);
-      audioBuffer.getChannelData(0).set(audioData);
+      const buffer = audioContext.createBuffer(1, audioBuffer.length, sampleRate);
+      buffer.getChannelData(0).set(audioBuffer);
       
       // Convert to WAV blob
-      const blob = await audioBufferToWav(audioBuffer);
+      const blob = await audioBufferToWav(buffer);
       const url = URL.createObjectURL(blob);
       
       setAudioUrl(url);
